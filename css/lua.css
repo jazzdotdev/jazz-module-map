@@ -1,0 +1,20 @@
+pre{
+    counter-reset: line;
+    font-family: Consolas, "Andale Mono WT", "Andale Mono", "Lucida Console",
+		"Lucida Sans Typewriter", "DejaVu Sans Mono", "Bitstream Vera Sans Mono",
+		"Liberation Mono", "Nimbus Mono L", Monaco, "Courier New", Courier, monospace;
+}
+code{
+    counter-increment: line;
+}
+
+code:target {
+   text-decoration: underline;
+   text-decoration-color: red;
+}
+
+code:before{
+    content: counter(line);
+    -webkit-user-select: none;
+    padding-right: 15px;
+}
