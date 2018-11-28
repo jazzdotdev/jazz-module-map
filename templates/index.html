@@ -8,18 +8,22 @@
 <body>
 
 	<div class="tree">
-		{% for assignment in assignments %}
 			<ul>
+				{% for assignment in assignments %}
 				<li>
 			    	<a href='#{{assignment.name}}'>{{assignment.name}}</a>
 			    	<ul>
 			    		{% for child in assignment.children %}
-		                  <li><a href='#{{child.mod}}'>{{child.mod}}</a></li>
+			    		  {% if child.use_path %}
+		                    <li><a href='{{child.path}}#{{child.line}}'>{{child.mod}}</a></li>
+		                  {% else %}
+		                    <li><a href='#{{child.mod}}'>{{child.mod}}</a></li>
+		                  {% endif %}
 		                {% endfor %}
 	                </ul>
 		        </li>
+		        {% endfor %}
 		    </ul>
-		{% endfor %}
 	</div>
 
 	<div class="modules">

@@ -62,7 +62,7 @@ local function match_obj_func(line, file_path)
 	end
 end
 
---- match lines like 'obj.var_name = require "module"' into:
+--- match lines like 'obj.var_name = require "module"'
 local function match_require(line, file_path)
 	for result in string.gmatch(line, "([^\n]+)") do
 		local line_number, line_without_line_info = string.match(result, "([^:]+):(.+)")
@@ -78,10 +78,132 @@ local function match_require(line, file_path)
 			name = table_name,
 			var = var_name,
 			mod = module_name,
-			line = line_number
+			line = line_number,
+			path = file_path
 		}
 
 		table.insert(assignments[table_name], new_assignment_info)
+	end
+end
+
+--- match lines like '_G.obj_name = require'
+local function match_global_require(line, file_path)
+	for result in string.gmatch(line, "([^\n]+)") do
+		local line_number, line_without_line_info = string.match(result, "([^:]+):(.+)")
+		local module_name = string.match(line_without_line_info, "_G%.([^%s=]+)")
+		local table_name = "_G"
+
+		if not assignments[table_name] then
+			assignments[table_name] = {}
+		end
+
+		local new_assignment_info = {
+			name = table_name,
+			mod = module_name,
+			line = line_number,
+			path = file_path
+		}
+
+		local already_exists = false
+		for _, assignment_info in ipairs( assignments[table_name] ) do
+			if module_name == assignment_info.mod then
+				already_exists = true
+				break
+			end
+		end
+
+		if not already_exists then
+			table.insert(assignments[table_name], new_assignment_info)
+		end
+	end
+end
+
+--- match lines like 'require "obj_name"' and 'require "folder.obj_name"'
+local function match_module_require(line, file_path, file_name)
+	if not objects[file_name] then
+		return
+	end
+
+	for result in string.gmatch(line, "([^\n]+)") do
+		local line_number, line_without_line_info = string.match(result, "([^:]+):(.+)")
+		local module_name = string.match(line_without_line_info, "require%s+[\"'](.+)[\"']")
+		if string.find(module_name, ".") then
+			module_name = string.match(module_name, ".*%.(.*)")
+		end
+		local table_name = file_name
+
+		if not assignments[table_name] then
+			assignments[table_name] = {}
+		end
+
+		local new_assignment_info = {
+			name = table_name,
+			mod = module_name,
+			line = line_number,
+			path = file_path
+		}
+
+		local already_exists = false
+		for _, assignment_info in ipairs( assignments[table_name] ) do
+			if module_name == assignment_info.mod then
+				already_exists = true
+				break
+			end
+		end
+
+		if not already_exists then
+			if not objects[module_name] then
+				new_assignment_info.use_path = true
+			end
+
+			table.insert(assignments[table_name], new_assignment_info)
+		end
+	end
+end
+
+--- match lines like 'global_table["key"] = ...'
+local function match_global_table_access(line, file_path)
+	for result in string.gmatch(line, "([^\n]+)") do
+		local line_number, line_without_line_info = string.match(result, "([^:]+):(.+)")
+		local table_name, module_name = string.match(line_without_line_info, '([^\\[]+)..([^"\'"]+).*')
+
+		if not objects[table_name] then
+			objects[table_name] = {
+				funcs = {},
+				methods = {}
+			}
+		end
+
+		local new_func_info = {
+			name = module_name,
+			path = file_path,
+			line = line_number
+		}
+
+		table.insert(objects[table_name].funcs, new_func_info)
+
+		local already_exists = false
+		for _, assignment_info in ipairs( assignments["_G"] ) do
+			if table_name == assignment_info.mod then
+				already_exists = true
+				break
+			end
+		end
+
+		local new_assignment_info = {
+			name = "_G",
+			mod = table_name,
+			line = line_number,
+			path = file_path
+		}
+
+		if not already_exists then
+			if not objects[table_name] then
+				new_assignment_info.use_path = true
+			end
+
+			table.insert(assignments["_G"], new_assignment_info)
+		end
 	end
 end
 
@@ -127,6 +249,25 @@ local function parse_assignments(path)
 				handle:close()
 				match_require(result, file_path)
 			end
+
+			for obj_name, _ in pairs( objects ) do
+				handle = io.popen('cd '..path..'; grep -nE "^_G\\.'..obj_name..'\\s*=\\s*require" '..obj)
+				result = handle:read("*a")
+				handle:close()
+				match_global_require(result, file_path)
+			end
+
+			for obj_name, _ in pairs( objects ) do
+				handle = io.popen('cd '..path..'; grep -nE "^require [\"\']'..obj_name..'[\"\'] '..obj)
+				result = handle:read("*a")
+				handle:close()
+				match_module_require(result, file_path, obj:match("^(.+)%..+$"))
+			end
+
+			handle = io.popen('cd '..path..'; grep -nE "^\\w+\\[\\"\\w+\\"\\][ ]+=" '..obj)
+			result = handle:read("*a")
+			handle:close()
+			match_global_table_access(result, file_path)
 		end
 	end
 end
