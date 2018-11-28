@@ -10,6 +10,8 @@ log.debug("[loading] libraries")
 
 math.randomseed(os.time())
 
+tera.instance = tera.new(torchbear.settings.templates_path or "templates/**/*")
+
 _G.log = require "third-party.log"
 _G.inspect = require "third-party.inspect"
 _G.luvent = require "third-party.Luvent"
@@ -35,6 +37,13 @@ local theme_loader = require "loaders.themes"
 
 if torchbear.settings.theme then
   theme_loader.load_themes("themes", torchbear.settings.theme)
+end
+
+_G.model_loader = require "loaders.models"
+model_loader.load_models(torchbear.settings.models_path or "models")
+
+function _G.render (file, data)
+  return tera.instance:render(file, data)
 end
 
 local incoming_request_event = events["incoming_request_received"]
@@ -76,11 +85,6 @@ function _G.send_request (request)
 end
 
 log.info("[loaded] LightTouch")
-
-content.setup_schema()
-content.setup_index()
-
-log.info("[loaded] Tantivy index")
 
 events["lighttouch_loaded"]:trigger()
 

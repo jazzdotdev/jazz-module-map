@@ -357,7 +357,7 @@ end
 local function get_lua_file_markup(body)
 	local new_body = "<pre>"
 	local line_index = 1
-	for s in body:gmatch("[^\n]+") do
+	for s in body:gmatch("[^\n]*") do
 	    new_body = new_body..'<code id="'..line_index..'">'..s..'</code>'
 	    line_index = line_index + 1
 	end

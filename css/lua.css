@@ -6,6 +6,7 @@ pre{
 }
 code{
     counter-increment: line;
+    display: block;
 }
 
 code:target {
