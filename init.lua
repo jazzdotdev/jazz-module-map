@@ -306,6 +306,27 @@ for k, v in pairs( assignments ) do
 	end
 end
 
+for obj_name, func_methods in pairs( objects ) do
+	if obj_name ~= "_G" then
+		local already_exists = false
+		for _, assignment in ipairs( G_assignment.children ) do
+			if assignment.mod == obj_name then
+				already_exists = true
+				break
+			end
+		end
+		if not already_exists then
+			local assignment = {
+				name = "_G",
+				mod = obj_name,
+				line = 1,
+				path = "",
+			}
+			table.insert(G_assignment.children, assignment)
+		end
+	end
+end
+
 local objs = {}
 for obj_name, func_methods in pairs( objects ) do
 	local new_o = {}

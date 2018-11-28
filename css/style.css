@@ -42,10 +42,10 @@ details[open] summary {
 }
 
 .tree {
-  -webkit-transform: scale(2);
-  -moz-transform: scale(2);
-  -ms-transform: scale(2);
-  -o-transform: scale(2);
+  -webkit-transform: scale(1.5);
+  -moz-transform: scale(1.5);
+  -ms-transform: scale(1.5);
+  -o-transform: scale(1.5);
   width: 100%;
   margin: 50px auto 80px auto;
 }
