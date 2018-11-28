@@ -30,6 +30,15 @@
 	    {% for obj in objects %}
 		    <details open>
 		        <summary id="{{ obj.name }}">{{ obj.name }}</summary>
+		        {% if obj.members %}
+			        {% if obj.members | length > 0 %}
+		        		{% for member in obj.members %}
+		        			<span class="bm-5">member {{ member.name }}</span>
+		        			<a href="{{member.path}}#{{member.line}}">⇒</a>
+		        			<br>
+		        		{% endfor %}
+	        		{% endif %}
+	    		{% endif %}
 	    		{% if obj.funcs | length > 0 %}
 	        		{% for func_info in obj.funcs %}
 	        			<span class="bm-5">{{ func_info.name }}</span>

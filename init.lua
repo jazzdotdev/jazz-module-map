@@ -173,6 +173,9 @@ local function match_global_table_access(line, file_path)
 				methods = {}
 			}
 		end
+		if not objects[table_name].members then
+			objects[table_name].members = {}
+		end
 
 		local new_func_info = {
 			name = module_name,
@@ -180,7 +183,7 @@ local function match_global_table_access(line, file_path)
 			line = line_number
 		}
 
-		table.insert(objects[table_name].funcs, new_func_info)
+		table.insert(objects[table_name].members, new_func_info)
 
 		local already_exists = false
 		for _, assignment_info in ipairs( assignments["_G"] ) do
@@ -276,12 +279,31 @@ parse_dir("./doc")
 parse_assignments("./doc")
 
 local assignments_to_body = {}
+
+local G_assignment = {
+	name = "_G",
+	children = assignments["_G"]
+}
+table.insert(assignments_to_body, G_assignment)
 for k, v in pairs( assignments ) do
-	local assignment = {
-		name = k,
-		children = v
-	}
-	table.insert(assignments_to_body, assignment)
+	if k ~= "_G" then
+		local assignment = {
+			name = "_G",
+			mod = k,
+			line = 1,
+			path = "",
+		}
+		table.insert(G_assignment.children, assignment)
+	end
+end
+for k, v in pairs( assignments ) do
+	if k ~= "_G" then
+		local assignment = {
+			name = k,
+			children = v
+		}
+		table.insert(assignments_to_body, assignment)
+	end
 end
 
 local objs = {}
@@ -307,6 +329,7 @@ for obj_name, func_methods in pairs( objects ) do
 	new_o.name = obj_name
 	new_o.funcs = func_methods.funcs or {}
 	new_o.methods = func_methods.methods or {}
+	new_o.members = func_methods.members or {}
 	-- end
 end
 
