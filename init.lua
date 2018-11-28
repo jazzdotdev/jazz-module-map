@@ -6,6 +6,7 @@ end
 
 local objects = {}
 local assignments = {}
+assignments["_G"] = {}
 
 --- split lines like "function obj1.fun_name(args)" into:
 --- table_name: "obj1"
