@@ -9,11 +9,27 @@
     margin-bottom: 2px;
 }
 
+.tree-margin {
+    margin-top: 120px !important;
+}
+
 .modules {
     margin-left: 15px;
 }
 
-details {
+.module-name {
+    font-weight: normal;
+}
+
+.details-tree {
+    max-width: 500px;
+    margin: 0 auto;
+    border: 1px solid #aaa;
+    border-radius: 4px;
+    padding: 10px 10px 2px 10px;
+}
+
+.details-list {
     border: 1px solid #aaa;
     border-radius: 4px;
     padding: .5em .5em 0;
@@ -121,7 +137,7 @@ right connector from last child*/
     width: 0; height: 20px;
 }
 
-.tree li a{
+/*.tree li a{
     border: 1px solid #ccc;
     padding: 5px 10px;
     text-decoration: none;
@@ -137,17 +153,17 @@ right connector from last child*/
     transition: all 0.5s;
     -webkit-transition: all 0.5s;
     -moz-transition: all 0.5s;
-}
+}*/
 
 /*Time for some hover effects*/
 /*We will apply the hover effect the the lineage of the element also*/
-.tree li a:hover, .tree li a:hover+ul li a {
+/*.tree li a:hover, .tree li a:hover+ul li a {
     background: #c8e4f8; color: #000; border: 1px solid #94a0b4;
-}
+}*/
 /*Connector styles on hover*/
-.tree li a:hover+ul li::after,
+/*.tree li a:hover+ul li::after,
 .tree li a:hover+ul li::before,
 .tree li a:hover+ul::before,
 .tree li a:hover+ul ul::before{
     border-color:  #94a0b4;
-}
+}*/

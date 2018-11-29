@@ -307,7 +307,7 @@ for k, v in pairs( assignments ) do
 	end
 end
 
-for obj_name, func_methods in pairs( objects ) do
+for obj_name, _ in pairs( objects ) do
 	if obj_name ~= "_G" then
 		local already_exists = false
 		for _, assignment in ipairs( G_assignment.children ) do
@@ -353,6 +353,23 @@ for obj_name, func_methods in pairs( objects ) do
 	new_o.methods = func_methods.methods or {}
 	new_o.members = func_methods.members or {}
 	-- end
+end
+
+for _, assignment in ipairs( assignments_to_body ) do
+	for _, obj in ipairs( objs ) do
+		if obj.name == assignment.name then
+			assignment.obj = obj
+			break
+		end
+	end
+	for _, child in ipairs( assignment.children ) do
+		for _, obj in ipairs( objs ) do
+			if obj.name == child.mod then
+				child.obj = obj
+				break
+			end
+		end
+	end
 end
 
 local function get_lua_file_markup(body)

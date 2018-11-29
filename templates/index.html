@@ -7,28 +7,84 @@
 </head>
 <body>
 
-	<div class="tree">
-			{% for assignment in assignments %}
-				<ul>
-					<li>
-				    	<a href='#{{assignment.name}}'>{{assignment.name}}</a>
-				    	<ul>
-				    		{% for child in assignment.children %}
-				    		  {% if child.use_path %}
-			                    <li><a href='{{child.path}}#{{child.line}}'>{{child.mod}}</a></li>
-			                  {% else %}
-			                    <li><a href='#{{child.mod}}'>{{child.mod}}</a></li>
-			                  {% endif %}
-			                {% endfor %}
-		                </ul>
-			        </li>
-			    </ul>
-	        {% endfor %}
+	<div class="tree tree-margin">
+		{% for assignment in assignments %}
+			<ul>
+				<li>
+			    	<!-- <a href='#{{assignment.obj.name}}'>{{assignment.obj.name}}</a> -->
+	    		    <details class="details-tree">
+	    		        <summary class="module-name">{{ assignment.obj.name }}</summary>
+	    		        {% if assignment.obj.members %}
+	    			        {% if assignment.obj.members | length > 0 %}
+	    		        		{% for member in assignment.obj.members %}
+	    		        			<span class="bm-5">member {{ member.name }}</span>
+	    		        			<a href="{{member.path}}#{{member.line}}">⇒</a>
+	    		        			<br>
+	    		        		{% endfor %}
+	    	        		{% endif %}
+	    	    		{% endif %}
+	    	    		{% if assignment.obj.funcs | length > 0 %}
+	    	        		{% for func_info in assignment.obj.funcs %}
+	    	        			<span class="bm-5">{{ func_info.name }}</span>
+	    	        			<a href="{{func_info.path}}#{{func_info.line}}">⇒</a>
+	    	        			<br>
+	    	        		{% endfor %}
+	    	    		{% endif %}
+	    	    		{% if assignment.obj.methods | length > 0 %}
+	    	        		{% for func_info in assignment.obj.methods %}
+	    	        			<span class="bm-5 underlined">{{ func_info.name }}</span>
+	    	        			<a href="{{func_info.path}}#{{func_info.line}}">⇒</a>
+	    	        			<br>
+	    	        		{% endfor %}
+	    	    		{% endif %}
+	    		    </details>
+			    	<ul>
+			    		{% for child in assignment.children %}
+			    			{% if child.obj %}
+			    			<li>
+		    				    <details class="details-tree">
+		    				        <summary class="module-name">{{ child.obj.name }}</summary>
+		    				        {% if child.obj.members %}
+		    					        {% if child.obj.members | length > 0 %}
+		    				        		{% for member in child.obj.members %}
+		    				        			<span class="bm-5">member {{ member.name }}</span>
+		    				        			<a href="{{member.path}}#{{member.line}}">⇒</a>
+		    				        			<br>
+		    				        		{% endfor %}
+		    			        		{% endif %}
+		    			    		{% endif %}
+		    			    		{% if child.obj.funcs | length > 0 %}
+		    			        		{% for func_info in child.obj.funcs %}
+		    			        			<span class="bm-5">{{ func_info.name }}</span>
+		    			        			<a href="{{func_info.path}}#{{func_info.line}}">⇒</a>
+		    			        			<br>
+		    			        		{% endfor %}
+		    			    		{% endif %}
+		    			    		{% if child.obj.methods | length > 0 %}
+		    			        		{% for func_info in child.obj.methods %}
+		    			        			<span class="bm-5 underlined">{{ func_info.name }}</span>
+		    			        			<a href="{{func_info.path}}#{{func_info.line}}">⇒</a>
+		    			        			<br>
+		    			        		{% endfor %}
+		    			    		{% endif %}
+		    				    </details>
+	    				    </li>
+							{% endif %}
+			    		  {% if child.use_path %}
+		                    <!-- <li><a href='{{child.path}}#{{child.line}}'>{{child.mod}}</a></li> -->
+		                  {% else %}
+		                    <!-- <li><a href='#{{child.mod}}'>{{child.mod}}</a></li> -->
+		                  {% endif %}
+		                {% endfor %}
+	                </ul>
+		        </li>
+		    </ul>
+        {% endfor %}
 	</div>
 
 	<div class="modules">
 	    {% for obj in objects %}
-		    <details open>
+		    <details class="details-list" open>
 		        <summary id="{{ obj.name }}">{{ obj.name }}</summary>
 		        {% if obj.members %}
 			        {% if obj.members | length > 0 %}
