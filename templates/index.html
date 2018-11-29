@@ -68,6 +68,40 @@
 		    			        		{% endfor %}
 		    			    		{% endif %}
 		    				    </details>
+	    		    			{% if child.obj.children %}
+	    		    			<ul>
+	    		    			{% for grandchild in child.obj.children %}
+	    		    			<li>
+	    	    				    <details class="details-tree">
+	    	    				        <summary class="module-name">{{ grandchild.name }}</summary>
+	    	    				        {% if grandchild.members %}
+	    	    					        {% if grandchild.members | length > 0 %}
+	    	    				        		{% for member in grandchild.members %}
+	    	    				        			<span class="bm-5">member {{ member.name }}</span>
+	    	    				        			<a href="{{member.path}}#{{member.line}}">⇒</a>
+	    	    				        			<br>
+	    	    				        		{% endfor %}
+	    	    			        		{% endif %}
+	    	    			    		{% endif %}
+	    	    			    		{% if grandchild.funcs | length > 0 %}
+	    	    			        		{% for func_info in grandchild.funcs %}
+	    	    			        			<span class="bm-5">{{ func_info.name }}</span>
+	    	    			        			<a href="{{func_info.path}}#{{func_info.line}}">⇒</a>
+	    	    			        			<br>
+	    	    			        		{% endfor %}
+	    	    			    		{% endif %}
+	    	    			    		{% if grandchild.methods | length > 0 %}
+	    	    			        		{% for func_info in grandchild.methods %}
+	    	    			        			<span class="bm-5 underlined">{{ func_info.name }}</span>
+	    	    			        			<a href="{{func_info.path}}#{{func_info.line}}">⇒</a>
+	    	    			        			<br>
+	    	    			        		{% endfor %}
+	    	    			    		{% endif %}
+	    	    				    </details>
+	        				    </li>
+		        				{% endfor %}
+		        				</ul>
+	    						{% endif %}
 	    				    </li>
 							{% endif %}
 		                {% endfor %}

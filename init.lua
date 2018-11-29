@@ -11,10 +11,9 @@ assignments["_G"] = {}
 --- split lines like "function obj1.fun_name(args)" into:
 --- table_name: "obj1"
 --- func_signature: "fun_name(args)"
-local function match_func_obj(line, file_path, is_method)
+local function match_func_obj(line, file_path, line_number, is_method)
 	for result in string.gmatch(line, "([^\n]+)") do
-		local line_number, line_without_line_info = string.match(result, "([^:]+):(.+)")
-		local result_not_function = string.gsub(line_without_line_info, "function ", "")
+		local result_not_function = string.gsub(result, "function ", "")
 		local table_name, func_signature = string.match(result_not_function, "([^%.:]+).(.+)")
 
 		if not objects[table_name] then
@@ -39,10 +38,9 @@ end
 --- split lines like "obj2.fun_name = function(args)" into:
 --- table_name: "obj2"
 --- func_signature: "fun_name(args)"
-local function match_obj_func(line, file_path)
+local function match_obj_func(line, file_path, line_number)
 	for result in string.gmatch(line, "([^\n]+)") do
-		local line_number, line_without_line_info = string.match(result, "([^:]+):(.+)")
-		local table_name, func_name_and_args = string.match(line_without_line_info, "%s*([^%.:]+).(.+)")
+		local table_name, func_name_and_args = string.match(result, "%s*([^%.:]+).(.+)")
 		local func_name = string.match(func_name_and_args, "([^ ]+)")
 		local func_args = string.match(func_name_and_args, "[^%(]+(.+%))")
 
@@ -64,10 +62,9 @@ local function match_obj_func(line, file_path)
 end
 
 --- match lines like 'obj.var_name = require "module"'
-local function match_require(line, file_path)
+local function match_require(line, file_path, line_number)
 	for result in string.gmatch(line, "([^\n]+)") do
-		local line_number, line_without_line_info = string.match(result, "([^:]+):(.+)")
-		local table_name, module_to_var = string.match(line_without_line_info, "%s*([^%.:]+).(.+)")
+		local table_name, module_to_var = string.match(result, "%s*([^%.:]+).(.+)")
 		local var_name = string.match(module_to_var, "([^ ]+)")
 		local module_name = string.match(module_to_var, "[^\"']*[\"'](.+)[\"']")
 
@@ -88,10 +85,9 @@ local function match_require(line, file_path)
 end
 
 --- match lines like '_G.obj_name = require'
-local function match_global_require(line, file_path)
+local function match_global_require(line, file_path, line_number)
 	for result in string.gmatch(line, "([^\n]+)") do
-		local line_number, line_without_line_info = string.match(result, "([^:]+):(.+)")
-		local module_name = string.match(line_without_line_info, "_G%.([^%s=]+)")
+		local module_name = string.match(result, "_G%.([^%s=]+)")
 		local table_name = "_G"
 
 		if not assignments[table_name] then
@@ -120,14 +116,13 @@ local function match_global_require(line, file_path)
 end
 
 --- match lines like 'require "obj_name"' and 'require "folder.obj_name"'
-local function match_module_require(line, file_path, file_name)
+local function match_module_require(line, file_path, line_number, file_name)
 	if not objects[file_name] then
 		return
 	end
 
 	for result in string.gmatch(line, "([^\n]+)") do
-		local line_number, line_without_line_info = string.match(result, "([^:]+):(.+)")
-		local module_name = string.match(line_without_line_info, "require%s+[\"'](.+)[\"']")
+		local module_name = string.match(result, "require%s+[\"'](.+)[\"']")
 		if string.find(module_name, ".") then
 			module_name = string.match(module_name, ".*%.(.*)")
 		end
@@ -163,10 +158,9 @@ local function match_module_require(line, file_path, file_name)
 end
 
 --- match lines like 'global_table["key"] = ...'
-local function match_global_table_access(line, file_path)
+local function match_global_table_access(line, file_path, line_number)
 	for result in string.gmatch(line, "([^\n]+)") do
-		local line_number, line_without_line_info = string.match(result, "([^:]+):(.+)")
-		local table_name, module_name = string.match(line_without_line_info, '([^\\[]+)..([^"\'"]+).*')
+		local table_name, module_name = string.match(result, '([^\\[]+)..([^"\'"]+).*')
 
 		if not objects[table_name] then
 			objects[table_name] = {
@@ -222,13 +216,13 @@ local function parse_dir(path)
 			local line_index = 1
 			for s in file_contents:gmatch("[^\n]*") do
 			    if regex.match("^function.*?\\.", s) then
-					match_func_obj(line_index..":"..s, file_path)
+					match_func_obj(s, file_path, line_index)
 			    end
 			    if regex.match("^function.*?:", s) then
-					match_func_obj(line_index..":"..s, file_path, true)
+					match_func_obj(s, file_path, line_index, true)
 			    end
 			    if regex.match("^[^-{2.}].*?\\.[\\w]+?.*?=[ ]*?function[ ]*?\\(", s) then
-					match_obj_func(line_index..":"..s, file_path)
+					match_obj_func(s, file_path, line_index)
 			    end
 			    line_index = line_index + 1
 			end
@@ -249,18 +243,18 @@ local function parse_assignments(path)
 			for s in file_contents:gmatch("[^\n]*") do
 				for obj_name, _ in pairs( objects ) do
 				    if regex.match('=\\s*require\\s*"'..obj_name..'"', s) then
-						match_require(line_index..":"..s, file_path)
+						match_require(s, file_path, line_index)
 				    end
 				    if regex.match('^_G\\.'..obj_name..'\\s*=\\s*require', s) then
-						match_global_require(line_index..":"..s, file_path)
+						match_global_require(s, file_path, line_index)
 				    end
 				    if regex.match('^require [\"\'].*'..obj_name..'.*[\"\']', s) then
-						match_module_require(line_index..":"..s, file_path, obj:match("^(.+)%..+$"))
+						match_module_require(s, file_path, line_index, obj:match("^(.+)%..+$"))
 				    end
 				end
 
 				if regex.match('^\\w+\\["\\w+"\\][ ]+=', s) then
-					match_global_table_access(line_index..":"..s, file_path)
+					match_global_table_access(s, file_path, line_index)
 			    end
 
 			    line_index = line_index + 1
@@ -290,15 +284,6 @@ for k, v in pairs( assignments ) do
 		table.insert(G_assignment.children, assignment)
 	end
 end
-for k, v in pairs( assignments ) do
-	if k ~= "_G" then
-		local assignment = {
-			name = k,
-			children = v
-		}
-		table.insert(assignments_to_body, assignment)
-	end
-end
 
 for obj_name, _ in pairs( objects ) do
 	if obj_name ~= "_G" then
@@ -324,28 +309,11 @@ end
 local objs = {}
 for obj_name, func_methods in pairs( objects ) do
 	local new_o = {}
-
-	-- local assigned_to_any = false
-	-- for ass_obj_name, children_of_obj in pairs( assignments ) do
-	-- 	if obj_name == ass_obj_name then
-	-- 		assigned_to_any = true
-	-- 		break
-	-- 	end
-	-- 	for _, child_obj_name in ipairs( children_of_obj ) do
-	-- 		if obj_name == child_obj_name then
-	-- 			assigned_to_any = true
-	-- 			break
-	-- 		end
-	-- 	end
-	-- end
-
-	-- if not assigned_to_any then
 	table.insert(objs, new_o)
 	new_o.name = obj_name
 	new_o.funcs = func_methods.funcs or {}
 	new_o.methods = func_methods.methods or {}
 	new_o.members = func_methods.members or {}
-	-- end
 end
 
 for _, assignment in ipairs( assignments_to_body ) do
@@ -360,6 +328,28 @@ for _, assignment in ipairs( assignments_to_body ) do
 			if obj.name == child.mod then
 				child.obj = obj
 				break
+			end
+		end
+	end
+end
+
+for k, v in pairs( assignments ) do
+	if k ~= "_G" then
+		local assignment  = G_assignment
+		for _, child in ipairs( assignment.children ) do
+			if child.mod == k then
+				for _, obj in ipairs( objs ) do
+					for _, ass_child in pairs( v ) do
+						if obj.name == ass_child.mod then
+							if not child.obj.children then
+								child.obj.children = {}
+							end
+
+							table.insert(child.obj.children, obj)
+							break
+						end
+					end
+				end
 			end
 		end
 	end
