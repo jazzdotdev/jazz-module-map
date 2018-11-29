@@ -376,6 +376,8 @@ local function get_lua_file_markup(body)
 	return new_body
 end
 
+local _tera = tera.new("./templates/*")
+
 return function (request)
 
 	if file_ext(request.path) == ".css" then
@@ -397,7 +399,7 @@ return function (request)
 	      headers = {
 	        ["content-type"] = "text/html",
 	      },
-	      body = render("lua_script.html", {
+	      body = _tera:render("lua_script.html", {
 			  body = body
 		})
 	  }
@@ -407,7 +409,7 @@ return function (request)
 		headers = {
 		  ["content-type"] = "text/html",
 		},
-		body = render("index.html", {
+		body = _tera:render("index.html", {
 		  objects = objs,
 		  assignments = assignments_to_body
 	})
