@@ -216,24 +216,22 @@ local function parse_dir(path)
 		if fs.is_dir(path.."/"..obj) then
 			parse_dir(path.."/"..obj)
 		elseif file_ext(obj) == ".lua" then
-			local handle, result
 
 			local file_path = path.."/"..obj
-
-			handle = io.popen('cd '..path..'; grep -nE "^function.*?\\." '..obj)
-			result = handle:read("*a")
-			handle:close()
-			match_func_obj(result, file_path)
-
-			handle = io.popen('cd '..path..'; grep -nE "^function.*?:" '..obj)
-			result = handle:read("*a")
-			handle:close()
-			match_func_obj(result, file_path, true)
-
-			handle = io.popen('cd '..path..'; grep -nE "^[^-{2.}].*?\\.[\\w]+?.*?=[ ]*?function[ ]*?\\(" '..obj)
-			result = handle:read("*a")
-			handle:close()
-			match_obj_func(result, file_path)
+			local file_contents = fs.read_file(file_path)
+			local line_index = 1
+			for s in file_contents:gmatch("[^\n]*") do
+			    if regex.match("^function.*?\\.", s) then
+					match_func_obj(line_index..":"..s, file_path)
+			    end
+			    if regex.match("^function.*?:", s) then
+					match_func_obj(line_index..":"..s, file_path, true)
+			    end
+			    if regex.match("^[^-{2.}].*?\\.[\\w]+?.*?=[ ]*?function[ ]*?\\(", s) then
+					match_obj_func(line_index..":"..s, file_path)
+			    end
+			    line_index = line_index + 1
+			end
 		end
 	end
 end
@@ -243,35 +241,30 @@ local function parse_assignments(path)
 		if fs.is_dir(path.."/"..obj) then
 			parse_assignments(path.."/"..obj)
 		elseif file_ext(obj) == ".lua" then
-			local handle, result
 
 			local file_path = path.."/"..obj
 
-			for obj_name, _ in pairs( objects ) do
-				handle = io.popen('cd '..path..'; grep -nE "=\\s*require\\s*\\"'..obj_name..'\\"" '..obj)
-				result = handle:read("*a")
-				handle:close()
-				match_require(result, file_path)
-			end
+			local file_contents = fs.read_file(file_path)
+			local line_index = 1
+			for s in file_contents:gmatch("[^\n]*") do
+				for obj_name, _ in pairs( objects ) do
+				    if regex.match('=\\s*require\\s*"'..obj_name..'"', s) then
+						match_require(line_index..":"..s, file_path)
+				    end
+				    if regex.match('^_G\\.'..obj_name..'\\s*=\\s*require', s) then
+						match_global_require(line_index..":"..s, file_path)
+				    end
+				    if regex.match('^require [\"\'].*'..obj_name..'.*[\"\']', s) then
+						match_module_require(line_index..":"..s, file_path, obj:match("^(.+)%..+$"))
+				    end
+				end
 
-			for obj_name, _ in pairs( objects ) do
-				handle = io.popen('cd '..path..'; grep -nE "^_G\\.'..obj_name..'\\s*=\\s*require" '..obj)
-				result = handle:read("*a")
-				handle:close()
-				match_global_require(result, file_path)
-			end
+				if regex.match('^\\w+\\["\\w+"\\][ ]+=', s) then
+					match_global_table_access(line_index..":"..s, file_path)
+			    end
 
-			for obj_name, _ in pairs( objects ) do
-				handle = io.popen('cd '..path..'; grep -nE "^require [\"\']'..obj_name..'[\"\'] '..obj)
-				result = handle:read("*a")
-				handle:close()
-				match_module_require(result, file_path, obj:match("^(.+)%..+$"))
+			    line_index = line_index + 1
 			end
-
-			handle = io.popen('cd '..path..'; grep -nE "^\\w+\\[\\"\\w+\\"\\][ ]+=" '..obj)
-			result = handle:read("*a")
-			handle:close()
-			match_global_table_access(result, file_path)
 		end
 	end
 end

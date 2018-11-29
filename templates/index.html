@@ -7,11 +7,11 @@
 </head>
 <body>
 
-	<div class="tree tree-margin">
+	<div class="module-tree-container">
+	<div class="tree">
 		{% for assignment in assignments %}
 			<ul>
 				<li>
-			    	<!-- <a href='#{{assignment.obj.name}}'>{{assignment.obj.name}}</a> -->
 	    		    <details class="details-tree">
 	    		        <summary class="module-name">{{ assignment.obj.name }}</summary>
 	    		        {% if assignment.obj.members %}
@@ -70,17 +70,12 @@
 		    				    </details>
 	    				    </li>
 							{% endif %}
-			    		  {% if child.use_path %}
-		                    <!-- <li><a href='{{child.path}}#{{child.line}}'>{{child.mod}}</a></li> -->
-		                  {% else %}
-		                    <!-- <li><a href='#{{child.mod}}'>{{child.mod}}</a></li> -->
-		                  {% endif %}
 		                {% endfor %}
 	                </ul>
 		        </li>
 		    </ul>
         {% endfor %}
-	</div>
+	</div></div>
 
 	<div class="modules">
 	    {% for obj in objects %}
