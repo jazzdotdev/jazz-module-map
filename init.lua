@@ -1,4 +1,5 @@
 log.info("Initialize web server")
+log.info("Parsing lua files...")
 
 function file_ext(file)
   return file:match("^.+(%..+)$")
@@ -12,106 +13,98 @@ assignments["_G"] = {}
 --- table_name: "obj1"
 --- func_signature: "fun_name(args)"
 local function match_func_obj(line, file_path, line_number, is_method)
-	for result in string.gmatch(line, "([^\n]+)") do
-		local result_not_function = string.gsub(result, "function ", "")
-		local table_name, func_signature = string.match(result_not_function, "([^%.:]+).(.+)")
+	local result_not_function = string.gsub(line, "function ", "")
+	local table_name, func_signature = string.match(result_not_function, "([^%.:]+).(.+)")
 
-		if not objects[table_name] then
-			objects[table_name] = {
-				funcs = {},
-				methods = {}
-			}
-		end
-
-		local t = is_method and objects[table_name].methods or objects[table_name].funcs
-
-		local new_func_info = {
-			name = func_signature,
-			path = file_path,
-			line = line_number
+	if not objects[table_name] then
+		objects[table_name] = {
+			funcs = {},
+			methods = {}
 		}
-
-		table.insert(t, new_func_info)
 	end
+
+	local t = is_method and objects[table_name].methods or objects[table_name].funcs
+
+	local new_func_info = {
+		name = func_signature,
+		path = file_path,
+		line = line_number
+	}
+
+	table.insert(t, new_func_info)
 end
 
 --- split lines like "obj2.fun_name = function(args)" into:
 --- table_name: "obj2"
 --- func_signature: "fun_name(args)"
 local function match_obj_func(line, file_path, line_number)
-	for result in string.gmatch(line, "([^\n]+)") do
-		local table_name, func_name_and_args = string.match(result, "%s*([^%.:]+).(.+)")
-		local func_name = string.match(func_name_and_args, "([^ ]+)")
-		local func_args = string.match(func_name_and_args, "[^%(]+(.+%))")
+	local table_name, func_name_and_args = string.match(line, "%s*([^%.:]+).(.+)")
+	local func_name = string.match(func_name_and_args, "([^ ]+)")
+	local func_args = string.match(func_name_and_args, "[^%(]+(.+%))")
 
-		if not objects[table_name] then
-			objects[table_name] = {
-				funcs = {},
-				methods = {}
-			}
-		end
-
-		local new_func_info = {
-			name = func_name.." "..func_args,
-			path = file_path,
-			line = line_number
+	if not objects[table_name] then
+		objects[table_name] = {
+			funcs = {},
+			methods = {}
 		}
-
-		table.insert(objects[table_name].funcs, new_func_info)
 	end
+
+	local new_func_info = {
+		name = func_name.." "..func_args,
+		path = file_path,
+		line = line_number
+	}
+
+	table.insert(objects[table_name].funcs, new_func_info)
 end
 
 --- match lines like 'obj.var_name = require "module"'
 local function match_require(line, file_path, line_number)
-	for result in string.gmatch(line, "([^\n]+)") do
-		local table_name, module_to_var = string.match(result, "%s*([^%.:]+).(.+)")
-		local var_name = string.match(module_to_var, "([^ ]+)")
-		local module_name = string.match(module_to_var, "[^\"']*[\"'](.+)[\"']")
+	local table_name, module_to_var = string.match(line, "%s*([^%.:]+).(.+)")
+	local var_name = string.match(module_to_var, "([^ ]+)")
+	local module_name = string.match(module_to_var, "[^\"']*[\"'](.+)[\"']")
 
-		if not assignments[table_name] then
-			assignments[table_name] = {}
-		end
-
-		local new_assignment_info = {
-			name = table_name,
-			var = var_name,
-			mod = module_name,
-			line = line_number,
-			path = file_path
-		}
-
-		table.insert(assignments[table_name], new_assignment_info)
+	if not assignments[table_name] then
+		assignments[table_name] = {}
 	end
+
+	local new_assignment_info = {
+		name = table_name,
+		var = var_name,
+		mod = module_name,
+		line = line_number,
+		path = file_path
+	}
+
+	table.insert(assignments[table_name], new_assignment_info)
 end
 
 --- match lines like '_G.obj_name = require'
 local function match_global_require(line, file_path, line_number)
-	for result in string.gmatch(line, "([^\n]+)") do
-		local module_name = string.match(result, "_G%.([^%s=]+)")
-		local table_name = "_G"
+	local module_name = string.match(line, "_G%.([^%s=]+)")
+	local table_name = "_G"
 
-		if not assignments[table_name] then
-			assignments[table_name] = {}
+	if not assignments[table_name] then
+		assignments[table_name] = {}
+	end
+
+	local new_assignment_info = {
+		name = table_name,
+		mod = module_name,
+		line = line_number,
+		path = file_path
+	}
+
+	local already_exists = false
+	for _, assignment_info in ipairs( assignments[table_name] ) do
+		if module_name == assignment_info.mod then
+			already_exists = true
+			break
 		end
+	end
 
-		local new_assignment_info = {
-			name = table_name,
-			mod = module_name,
-			line = line_number,
-			path = file_path
-		}
-
-		local already_exists = false
-		for _, assignment_info in ipairs( assignments[table_name] ) do
-			if module_name == assignment_info.mod then
-				already_exists = true
-				break
-			end
-		end
-
-		if not already_exists then
-			table.insert(assignments[table_name], new_assignment_info)
-		end
+	if not already_exists then
+		table.insert(assignments[table_name], new_assignment_info)
 	end
 end
 
@@ -121,87 +114,83 @@ local function match_module_require(line, file_path, line_number, file_name)
 		return
 	end
 
-	for result in string.gmatch(line, "([^\n]+)") do
-		local module_name = string.match(result, "require%s+[\"'](.+)[\"']")
-		if string.find(module_name, ".") then
-			module_name = string.match(module_name, ".*%.(.*)")
+	local module_name = string.match(line, "require%s+[\"'](.+)[\"']")
+	if string.find(module_name, ".") then
+		module_name = string.match(module_name, ".*%.(.*)")
+	end
+	local table_name = file_name
+
+	if not assignments[table_name] then
+		assignments[table_name] = {}
+	end
+
+	local new_assignment_info = {
+		name = table_name,
+		mod = module_name,
+		line = line_number,
+		path = file_path
+	}
+
+	local already_exists = false
+	for _, assignment_info in ipairs( assignments[table_name] ) do
+		if module_name == assignment_info.mod then
+			already_exists = true
+			break
 		end
-		local table_name = file_name
+	end
 
-		if not assignments[table_name] then
-			assignments[table_name] = {}
+	if not already_exists then
+		if not objects[module_name] then
+			new_assignment_info.use_path = true
 		end
 
-		local new_assignment_info = {
-			name = table_name,
-			mod = module_name,
-			line = line_number,
-			path = file_path
-		}
-
-		local already_exists = false
-		for _, assignment_info in ipairs( assignments[table_name] ) do
-			if module_name == assignment_info.mod then
-				already_exists = true
-				break
-			end
-		end
-
-		if not already_exists then
-			if not objects[module_name] then
-				new_assignment_info.use_path = true
-			end
-
-			table.insert(assignments[table_name], new_assignment_info)
-		end
+		table.insert(assignments[table_name], new_assignment_info)
 	end
 end
 
 --- match lines like 'global_table["key"] = ...'
 local function match_global_table_access(line, file_path, line_number)
-	for result in string.gmatch(line, "([^\n]+)") do
-		local table_name, module_name = string.match(result, '([^\\[]+)..([^"\'"]+).*')
+	local table_name, module_name = string.match(line, '([^\\[]+)..([^"\'"]+).*')
 
+	if not objects[table_name] then
+		objects[table_name] = {
+			funcs = {},
+			methods = {}
+		}
+	end
+	if not objects[table_name].members then
+		objects[table_name].members = {}
+	end
+
+	local new_func_info = {
+		name = module_name,
+		path = file_path,
+		line = line_number
+	}
+
+	table.insert(objects[table_name].members, new_func_info)
+
+	local already_exists = false
+	for _, assignment_info in ipairs( assignments["_G"] ) do
+		if table_name == assignment_info.mod then
+			already_exists = true
+			break
+		end
+	end
+
+	local new_assignment_info = {
+		name = "_G",
+		mod = table_name,
+		line = line_number,
+		path = file_path
+	}
+
+	if not already_exists then
 		if not objects[table_name] then
-			objects[table_name] = {
-				funcs = {},
-				methods = {}
-			}
-		end
-		if not objects[table_name].members then
-			objects[table_name].members = {}
+			new_assignment_info.use_path = true
 		end
 
-		local new_func_info = {
-			name = module_name,
-			path = file_path,
-			line = line_number
-		}
-
-		table.insert(objects[table_name].members, new_func_info)
-
-		local already_exists = false
-		for _, assignment_info in ipairs( assignments["_G"] ) do
-			if table_name == assignment_info.mod then
-				already_exists = true
-				break
-			end
-		end
-
-		local new_assignment_info = {
-			name = "_G",
-			mod = table_name,
-			line = line_number,
-			path = file_path
-		}
-
-		if not already_exists then
-			if not objects[table_name] then
-				new_assignment_info.use_path = true
-			end
-
-			table.insert(assignments["_G"], new_assignment_info)
-		end
+		table.insert(assignments["_G"], new_assignment_info)
 	end
 end
 
@@ -354,6 +343,8 @@ for k, v in pairs( assignments ) do
 		end
 	end
 end
+
+log.info("Done parsing lua files!")
 
 local function get_lua_file_markup(body)
 	local new_body = "<pre>"
