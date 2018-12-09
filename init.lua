@@ -386,11 +386,16 @@ return function (request)
 	  }
 	end
 
+	local template_name = "index.html"
+	if fs.exists("./templates"..request.path..".html") then
+		template_name = string.match(request.path, '/(.*)')..".html"
+	end
+
 	return {
 		headers = {
 		  ["content-type"] = "text/html",
 		},
-		body = _tera:render("index.html", {
+		body = _tera:render(template_name, {
 		  objects = objs,
 		  assignments = assignments_to_body
 	})
