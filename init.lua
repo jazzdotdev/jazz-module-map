@@ -58,6 +58,40 @@ local function match_obj_func(line, file_path, line_number)
 	table.insert(objects[table_name].funcs, new_func_info)
 end
 
+--- match lua binding in Rust files
+--- example: module.set("read_dir", lua.create_function( |lua, path: String| {
+local function match_module_set(line, file_path, line_number)
+	local func_name, func_args = string.match(line, "[^\"]+.([^\"]+).*|.*,[ ]*([^|]+)")
+
+	local new_func_info = {
+		name = func_name.." ("..func_args..")",
+		path = file_path,
+		line = line_number
+	}
+
+	return new_func_info
+end
+
+--- match lua binding in Rust files where we can't parse arguments
+--- example: module.set("read_dir", func_name)
+local function match_module_set_empty(line, file_path, line_number)
+	local func_name = string.match(line, "[^\"]+.([^\"]+)")
+	local new_func_info = {
+		name = func_name,
+		path = file_path,
+		line = line_number
+	}
+
+	return new_func_info
+end
+
+--- match module name in Rust lua bindings
+--- example: set("yaml", module)?;
+local function match_module_name(line, file_path, line_number)
+	local module_name = string.match(line, '.*set%(\"([^\"]*)')
+	return module_name
+end
+
 --- match lines like 'obj.var_name = require "module"'
 local function match_require(line, file_path, line_number)
 	local table_name, module_to_var = string.match(line, "%s*([^%.:]+).(.+)")
@@ -198,22 +232,49 @@ local function parse_dir(path)
 	for _, obj in ipairs( fs.read_dir(path) ) do
 		if fs.is_dir(path.."/"..obj) then
 			parse_dir(path.."/"..obj)
-		elseif file_ext(obj) == ".lua" then
-
+		elseif file_ext(obj) == ".lua" or file_ext(obj) == ".rs" then
 			local file_path = path.."/"..obj
 			local file_contents = fs.read_file(file_path)
 			local line_index = 1
+
+			-- module.set variables
+			local module_name
+			local rs_bindings = {}
+
 			for s in file_contents:gmatch("[^\n]*") do
-			    if regex.match("^function.*?\\.", s) then
-					match_func_obj(s, file_path, line_index)
-			    end
-			    if regex.match("^function.*?:", s) then
-					match_func_obj(s, file_path, line_index, true)
-			    end
-			    if regex.match("^[^-{2.}].*?\\.[\\w]+?.*?=[ ]*?function[ ]*?\\(", s) then
-					match_obj_func(s, file_path, line_index)
-			    end
+				if file_ext(obj) == ".lua" then
+				    if regex.match("^function.*?\\.", s) then
+						match_func_obj(s, file_path, line_index)
+				    end
+				    if regex.match("^function.*?:", s) then
+						match_func_obj(s, file_path, line_index, true)
+				    end
+				    if regex.match("^[^-{2.}].*?\\.[\\w]+?.*?=[ ]*?function[ ]*?\\(", s) then
+						match_obj_func(s, file_path, line_index)
+				    end
+				elseif file_ext(obj) == ".rs" then
+				    if regex.match("module\\.set.*?\\|.*?,[ ]*(.*?)\\|", s) then
+						table.insert(rs_bindings, match_module_set(s, file_path, line_index))
+				    elseif regex.match('module\\.set\\(".*?",', s) then
+						table.insert(rs_bindings, match_module_set_empty(s, file_path, line_index))
+				    end
+				    if regex.match("set\\(\".*?\",[ ]*module", s) then
+						module_name = match_module_name(s, file_path, line_index)
+				    end
+				end
 			    line_index = line_index + 1
+			end
+
+			if module_name and #rs_bindings > 0 then
+				if not objects[module_name] then
+					objects[module_name] = {
+						funcs = {},
+						methods = {}
+					}
+				end
+				for _, func_info in ipairs( rs_bindings ) do
+					table.insert(objects[module_name].funcs, func_info)
+				end
 			end
 		end
 	end
@@ -369,7 +430,7 @@ return function (request)
 
 	-- log.info(request.path)
 
-	if file_ext(request.path) == ".lua" then
+	if file_ext(request.path) == ".lua" or file_ext(request.path) == ".rs" then
 	  local body = fs.read_file("."..request.path)
 	  local code_lines = get_lua_file_lines(body)
 
