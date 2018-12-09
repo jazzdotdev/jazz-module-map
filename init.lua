@@ -346,15 +346,12 @@ end
 
 log.info("Done parsing lua files!")
 
-local function get_lua_file_markup(body)
-	local new_body = "<pre>"
-	local line_index = 1
-	for s in body:gmatch("[^\n]*") do
-	    new_body = new_body..'<code id="'..line_index..'">'..s..'</code>'
-	    line_index = line_index + 1
+local function get_lua_file_lines(body)
+	local code_lines = {}
+	for line in body:gmatch("[^\n]*") do
+	    table.insert(code_lines, line)
 	end
-	new_body = new_body.."</pre>"
-	return new_body
+	return code_lines
 end
 
 local _tera = tera.new("./templates/*")
@@ -374,18 +371,19 @@ return function (request)
 
 	if file_ext(request.path) == ".lua" then
 	  local body = fs.read_file("."..request.path)
-	  body = get_lua_file_markup(body)
+	  local code_lines = get_lua_file_lines(body)
 
 	  return {
 	      headers = {
 	        ["content-type"] = "text/html",
 	      },
 	      body = _tera:render("lua_script.html", {
-			  body = body
+			  lines = code_lines
 		})
 	  }
 	end
 
+	-- routing for templates
 	local template_name = "index.html"
 	if fs.exists("./templates"..request.path..".html") then
 		template_name = string.match(request.path, '/(.*)')..".html"
