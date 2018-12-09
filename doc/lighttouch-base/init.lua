@@ -28,8 +28,22 @@ require "table_ext"
 require "string_ext"
 require "underscore_alias"
 
-_G.content = require "content.init"
-_G.keys = require "keys"
+_G.content = require "content.mod"
+_G.keys = require "keys.mod"
+
+-- Get home-store uuid
+local home_store = fs.read_file("home-store.txt")
+if not home_store then
+  home_store = uuid.v4()
+  log.info("No home content store found. Creating new one with uuid " .. home_store)
+  local file = io.open("home-store.txt", "w")
+  if not file then
+    log.error("Could not open home-store.txt")
+  end
+  file:write(home_store)
+  file:close()
+end
+content.home = home_store
 
 require "loaders.package"
 
@@ -38,9 +52,6 @@ local theme_loader = require "loaders.themes"
 if torchbear.settings.theme then
   theme_loader.load_themes("themes", torchbear.settings.theme)
 end
-
-_G.model_loader = require "loaders.models"
-model_loader.load_models(torchbear.settings.models_path or "models")
 
 function _G.render (file, data)
   return tera.instance:render(file, data)

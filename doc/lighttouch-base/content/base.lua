@@ -1,12 +1,8 @@
-require "content.content_base"
-require "content.split_header"
-require "content.get_model_definition"
-require "content.get_validator"
-require "content.validate_document"
-require "content.read_document"
-require "content.documents"
-require "content.walk_documents"
-require "content.write_file"
+content = {
+  stores = {
+    home = "content/home/"
+  }
+}
 
 -- Methods for the model class
 local model_metatable = {}
@@ -28,4 +24,5 @@ for entry in fs.entries("content/") do
   end
 end
 
-return content
+
+  fs.create_dir("content/home", true)
