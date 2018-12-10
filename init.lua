@@ -239,6 +239,7 @@ local function parse_dir(path)
 
 			-- module.set variables
 			local module_name
+			local module_line
 			local rs_bindings = {}
 
 			for s in file_contents:gmatch("[^\n]*") do
@@ -260,6 +261,7 @@ local function parse_dir(path)
 				    end
 				    if regex.match("set\\(\".*?\",[ ]*module", s) then
 						module_name = match_module_name(s, file_path, line_index)
+						module_line = line_index
 				    end
 				end
 			    line_index = line_index + 1
@@ -274,6 +276,38 @@ local function parse_dir(path)
 				end
 				for _, func_info in ipairs( rs_bindings ) do
 					table.insert(objects[module_name].funcs, func_info)
+				end
+
+				local table_name = "_G"
+
+				if not objects[table_name] then
+					objects[table_name] = {
+						funcs = {},
+						methods = {}
+					}
+				end
+
+				if not assignments[table_name] then
+					assignments[table_name] = {}
+				end
+
+				local new_assignment_info = {
+					name = table_name,
+					mod = module_name,
+					line = module_line,
+					path = file_path
+				}
+
+				local already_exists = false
+				for _, assignment_info in ipairs( assignments[table_name] ) do
+					if module_name == assignment_info.mod then
+						already_exists = true
+						break
+					end
+				end
+
+				if not already_exists then
+					table.insert(assignments[table_name], new_assignment_info)
 				end
 			end
 		end
