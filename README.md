@@ -1,4 +1,4 @@
-<p align="center"><img width="160" src="https://i.imgur.com/Ev0iXla.png" alt="code-map logo"><br>This Project is Currently in Stealth Mode.<br>please do not post a news story until v0.1 is released very shortly.<br>thank you.</p>
+<p align="center"><img width="119" src="https://i.imgur.com/Ev0iXla.png" alt="code-map logo"><br>This Project is Currently in Stealth Mode.<br>please do not post a news story until v0.1 is released very shortly.<br>thank you.</p>
 
 
 # lua-module-map
