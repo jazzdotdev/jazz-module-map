@@ -3,3 +3,8 @@
 
 # lua-module-map
 An interactive Rust and Lua documentation generator with function tree diagrams and list views in pure HTML+CSS
+
+## Examples:
+
+* [Torchbear Bindings List](https://foundpatterns.github.io/torchbear-docs/torchbear-list-0.9.0-d3463da.html)
+* [Torchbear Bindings Diagram](https://foundpatterns.github.io/torchbear-docs/torchbear-diagram-0.9.0-0ace848.html)
