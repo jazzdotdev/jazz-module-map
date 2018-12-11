@@ -2,7 +2,7 @@
 
 
 # lua-module-map
-An interactive Rust and Lua documentation generator with function tree diagrams and list views in pure HTML+CSS
+An interactive Rust and Lua documentation generator with function tree diagrams and list views in pure HTML+CSS+NoJS
 
 ## Examples:
 
