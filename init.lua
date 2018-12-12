@@ -234,6 +234,9 @@ local function parse_dir(path)
 			parse_dir(path.."/"..obj)
 		elseif file_ext(obj) == ".lua" or file_ext(obj) == ".rs" then
 			local file_path = path.."/"..obj
+
+			log.info(file_path)
+
 			local file_contents = fs.read_file(file_path)
 			local line_index = 1
 
