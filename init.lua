@@ -493,7 +493,8 @@ return function (request)
 		},
 		body = _tera:render(template_name, {
 		  objects = objs,
-		  assignments = assignments_to_body
+		  assignments = assignments_to_body,
+		  project_name = torchbear.settings.project
 	})
 }
 

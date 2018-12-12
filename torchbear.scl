@@ -4,9 +4,11 @@ web-server = {
 	tls_private = "key.pem",
 	tls_host = "0.0.0.0:3001",
 	bootstrap_path = "bootstrap.lua",
-	single-actor = "true"
+	single_actor = true,
 }
 
 general = {
-	init = "init.lua"
+	init = "init.lua",
+	project = "Project",
+	log_level = "debug",
 }

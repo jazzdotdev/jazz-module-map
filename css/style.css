@@ -1,5 +1,23 @@
 * {margin: 0; padding: 0;}
 
+.project-name {
+    margin: 20px auto;
+    text-align: center;
+}
+
+.index-links {
+    margin: 0 auto;
+    text-align: center;
+}
+
+.index-links a {
+    display: block;
+}
+
+.m-t-20 {
+    margin-top: 20px;
+}
+
 .underlined {
     text-decoration: underline;
 }
@@ -30,6 +48,7 @@
 }
 
 .details-list {
+    margin: 0 auto;
     border: 1px solid #aaa;
     border-radius: 4px;
     padding: .5em .5em 0;
