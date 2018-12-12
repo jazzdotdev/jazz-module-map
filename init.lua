@@ -61,7 +61,7 @@ end
 --- match lua binding in Rust files
 --- example: module.set("read_dir", lua.create_function( |lua, path: String| {
 local function match_module_set(line, file_path, line_number)
-	local func_name, func_args = string.match(line, "[^\"]+.([^\"]+).*|.*,[ ]*([^|]+)")
+	local func_name, func_args = string.match(line, "[^\"]+.([^\"]+).*|[^,]*,[ ]*([^|]+)")
 
 	local new_func_info = {
 		name = func_name.." ("..func_args..")",
