@@ -2,7 +2,7 @@
 
 
 # Code Map
-An interactive documentation generator for Rust and Lua with function tree diagrams and list views in pure HTML+CSS+NoJS.  Parsing is done with regex and tree diagram based on [Pure CSS Flowchart](https://codepen.io/round/pen/RgpEoE).
+An interactive documentation generator for Rust and Lua with function tree diagrams and list views in pure HTML+CSS+NoJS.  Parsing is done with regex and tree diagram template based on [Pure CSS Flowchart](https://codepen.io/round/pen/RgpEoE).
 
 ## Examples
 
