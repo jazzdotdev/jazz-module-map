@@ -1,5 +1,5 @@
-log.info("Initialize web server")
-log.info("Parsing lua files...")
+_log.info("Initialize web server")
+_log.info("Parsing lua files...")
 
 function file_ext(file)
   return file:match("^.+(%..+)$")
@@ -235,7 +235,7 @@ local function parse_dir(path)
 		elseif file_ext(obj) == ".lua" or file_ext(obj) == ".rs" then
 			local file_path = path.."/"..obj
 
-			log.info(file_path)
+			_log.info(file_path)
 
 			local file_contents = fs.read_file(file_path)
 			local line_index = 1
@@ -442,7 +442,7 @@ for k, v in pairs( assignments ) do
 	end
 end
 
-log.info("Done parsing lua files!")
+_log.info("Done parsing lua files!")
 
 local function get_lua_file_lines(body)
 	local code_lines = {}

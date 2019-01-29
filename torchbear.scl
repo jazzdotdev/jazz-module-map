@@ -1,14 +1,11 @@
-web-server = {
-	host = "0.0.0.0:3000",
-	tls_certificate = "cert.pem",
-	tls_private = "key.pem",
-	tls_host = "0.0.0.0:3001",
-	bootstrap_path = "bootstrap.lua",
-	single_actor = true,
+general = {
+	project = "PROJECT NAME GOES HERE",
+	init = "init.lua",
+	log_level = "debug",
 }
 
-general = {
-	init = "init.lua",
-	project = "Project",
-	log_level = "debug",
+web-server = {
+	host = "0.0.0.0:3000",
+	bootstrap_path = "bootstrap.lua",
+	single_actor = true,
 }
