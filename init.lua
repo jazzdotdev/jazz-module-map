@@ -465,7 +465,7 @@ return function (request)
 	  }
 	end
 
-	-- log.info(request.path)
+	log.trace(request.path)
 
 	if file_ext(request.path) == ".lua" or file_ext(request.path) == ".rs" then
 	  local body = fs.read_file("."..request.path)
